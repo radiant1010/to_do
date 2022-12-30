@@ -16,10 +16,8 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     try {
       //중복 email 체크
-      const isEmail = await this.userRepository.findOne({
-        where: { email: createUserDto.email },
-      });
-
+      console.log("DTO로 넘어온 E-Mail :", createUserDto.email);
+      const isEmail = await this.isEmail(createUserDto.email);
       if (isEmail) {
         //email이 중복이면
         const errorMsg = "이미 가입된 E-mail이 존재합니다.";
@@ -36,8 +34,6 @@ export class UsersService {
           password: hash,
         });
 
-        //console.log("회원 가입 결과 :", saveUser);
-
         return {
           code: 101,
           result: `${saveUser.name}님 회원가입을 축하드립니다.`,
@@ -51,14 +47,28 @@ export class UsersService {
     }
   }
 
+  //email Check
+  async isEmail(email: string): Promise<User> {
+    //email여부 조회(유저 정보)
+    const isEmail = await this.userRepository.findOne({
+      where: { email: email },
+    });
+
+    return isEmail;
+  }
+
+  //user 정보 조회
+  async findOne(email: string): Promise<User> {
+    const isUser = await this.userRepository.findOne({
+      where: { email: email },
+    });
+    return isUser;
+  }
+
   /*   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
 
-  async findOne(email: string): Promise<User | undefined> {
-    //TypeORM 문법으로 수정(user table email column 조회)
-    return await this.userRepository.findOne({ email: email });
-  }
 
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
