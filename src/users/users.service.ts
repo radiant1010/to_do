@@ -3,7 +3,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { Repository } from "typeorm";
 import { User } from "./entities/user.entity";
-
+import * as bcrypt from "bcrypt";
 @Injectable()
 export class UsersService {
   constructor(
@@ -14,8 +14,41 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    console.log(createUserDto);
-    return `This action adds a new user ${createUserDto.name}`;
+    try {
+      //중복 email 체크
+      const IsEmail = await this.userRepository.findOne({
+        where: { email: createUserDto.email },
+      });
+
+      if (IsEmail) {
+        //email이 중복이면
+        const errorMsg = "이미 가입된 E-mail이 존재합니다.";
+        const error = new Error(errorMsg);
+        error.name = "isEmail";
+        throw error;
+      } else {
+        const saltOrRounds = 10;
+        const hash = await bcrypt.hash(createUserDto.password, saltOrRounds);
+
+        const saveUser = await this.userRepository.save({
+          name: createUserDto.name,
+          email: createUserDto.email,
+          password: hash,
+        });
+
+        //console.log("회원 가입 결과 :", saveUser);
+
+        return {
+          code: 101,
+          result: `${saveUser.name}님 회원가입을 축하드립니다.`,
+        };
+      }
+    } catch (error) {
+      if (error.name === "isEmail") {
+        console.error(error);
+        return { code: 201, result: error.message };
+      }
+    }
   }
 
   /*   async findAll(): Promise<User[]> {
