@@ -16,11 +16,11 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     try {
       //중복 email 체크
-      const IsEmail = await this.userRepository.findOne({
+      const isEmail = await this.userRepository.findOne({
         where: { email: createUserDto.email },
       });
 
-      if (IsEmail) {
+      if (isEmail) {
         //email이 중복이면
         const errorMsg = "이미 가입된 E-mail이 존재합니다.";
         const error = new Error(errorMsg);
