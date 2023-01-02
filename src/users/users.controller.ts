@@ -13,6 +13,7 @@ import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { LocalAuthGuard } from "../auth/local-auth.guard";
+import { AuthService } from "src/auth/auth.service";
 
 @Controller("users")
 export class UsersController {
@@ -23,11 +24,6 @@ export class UsersController {
     return await this.usersService.create(createUserDto);
   }
 
-  @UseGuards(LocalAuthGuard)
-  @Post("signin")
-  async login(@Request() req) {
-    return { code: 102, result: "로그인 성공!" };
-  }
   /*   @Get()
     findAll() {
       return this.usersService.findAll();

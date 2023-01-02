@@ -57,7 +57,7 @@ export class UsersService {
     return isEmail;
   }
 
-  //user 정보 조회
+  //user 정보 조회(로그인)
   async findOne(email: string): Promise<User> {
     const isUser = await this.userRepository.findOne({
       where: { email: email },
