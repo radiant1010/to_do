@@ -30,4 +30,7 @@ export class User {
   //수정일
   @UpdateDateColumn()
   updated_at: Date;
+  //refresh token
+  @Column({ type: "varchar", nullable: true })
+  refresh_token: string;
 }

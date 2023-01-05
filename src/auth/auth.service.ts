@@ -3,6 +3,7 @@ import { UsersService } from "../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { User } from "src/users/entities/user.entity";
+import { jwtConstants } from "./constants";
 
 @Injectable()
 export class AuthService {
@@ -23,7 +24,7 @@ export class AuthService {
     }
     return null;
   }
-  //JWT 로그인
+  //JWT 로그인(토큰 생성)
   async login(loginUser: User): Promise<any> {
     try {
       const user = await this.usersService.findOne(loginUser.email);
@@ -41,10 +42,25 @@ export class AuthService {
         email: user.email,
         role: user.role,
       };
-      console.log("Token 정보 값 :", payload);
+      console.log("payload정보 :", payload);
+      console.log({
+        secret: jwtConstants.secret,
+        expiresIn: "30m",
+      });
+      //refresh token, Access Token 둘다 생성
+      const accessToken = this.jwtService.sign(payload, {
+        secret: jwtConstants.secret,
+        expiresIn: "30m",
+      });
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: jwtConstants.refresh,
+        expiresIn: "2w",
+      });
+      console.log("access token 값 :", accessToken);
+      console.log("refresh token 값 :", refreshToken);
+
       return {
-        code: 111,
-        access_token: this.jwtService.sign(payload),
+        access_token: accessToken,
       };
     } catch (error) {
       if (error.name === "noUser") {
@@ -54,4 +70,6 @@ export class AuthService {
       }
     }
   }
+
+  //토큰 생성
 }
