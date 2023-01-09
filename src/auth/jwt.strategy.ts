@@ -11,7 +11,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       //JWT 만료 무시여부
       ignoreExpiration: false,
       secretOrKey: jwtConstants.secret,
-      algorithms: ["ES256"],
     });
   }
 

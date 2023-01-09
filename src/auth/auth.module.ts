@@ -10,7 +10,7 @@ import { JwtStrategy } from "./jwt.strategy";
 
 @Module({
   //User service등 사용하기 위해서 import
-  imports: [UsersModule, PassportModule.register({}), JwtModule.register({})],
+  imports: [UsersModule, PassportModule, JwtModule],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })

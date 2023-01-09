@@ -43,10 +43,6 @@ export class AuthService {
         role: user.role,
       };
       console.log("payload정보 :", payload);
-      console.log({
-        secret: jwtConstants.secret,
-        expiresIn: "30m",
-      });
       //refresh token, Access Token 둘다 생성
       const accessToken = this.jwtService.sign(payload, {
         secret: jwtConstants.secret,
@@ -58,9 +54,11 @@ export class AuthService {
       });
       console.log("access token 값 :", accessToken);
       console.log("refresh token 값 :", refreshToken);
-
+      //DB 저장
+      //cookie 전달
       return {
         access_token: accessToken,
+        refresh_token: refreshToken,
       };
     } catch (error) {
       if (error.name === "noUser") {
