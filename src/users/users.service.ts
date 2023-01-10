@@ -64,17 +64,4 @@ export class UsersService {
     });
     return isUser;
   }
-
-  /*   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
-  }
-
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  } */
 }

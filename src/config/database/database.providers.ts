@@ -13,6 +13,7 @@ export const databaseProviders = [
         database: "to_do",
         entities: [__dirname + "/../../**/*.entity{.ts,.js}"],
         synchronize: true,
+        timezone: "Asia/Seoul",
       });
       return dataSource.initialize();
     },

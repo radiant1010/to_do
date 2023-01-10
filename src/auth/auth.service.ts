@@ -54,8 +54,9 @@ export class AuthService {
       });
       console.log("access token 값 :", accessToken);
       console.log("refresh token 값 :", refreshToken);
-      //DB 저장
-      //cookie 전달
+      //refresh token DB 저장(UsersService)
+
+      //DB에 저장 완료되면 cookie에 등록할 값 전달
       return {
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -69,5 +70,10 @@ export class AuthService {
     }
   }
 
-  //토큰 생성
+  //refresh-token DB에 저장
+  async saveRefreshToken(id: number, refreshToken: string, expire: Date) {
+    return { code: 101, result: "success" };
+  }
+  //refresh-token DB에서 삭제
+  //refresh-token DB에서 업데이트
 }

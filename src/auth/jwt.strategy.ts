@@ -7,7 +7,11 @@ import { jwtConstants } from "./constants";
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request: any) => {
+          return request?.cookies?.Authorization;
+        },
+      ]),
       //JWT 만료 무시여부
       ignoreExpiration: false,
       secretOrKey: jwtConstants.secret,
@@ -15,9 +19,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    console.log("User 정보 :", payload);
     const userInfo = payload.sub;
     //user 정보가 있는지 여부 체크
-    console.log("User 정보 :", userInfo);
     if (userInfo) {
       return payload;
     } else {

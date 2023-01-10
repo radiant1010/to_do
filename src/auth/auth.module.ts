@@ -7,11 +7,13 @@ import { JwtModule, JwtSecretRequestType } from "@nestjs/jwt";
 import { jwtConstants } from "./constants";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
+import { authTokenProviders } from "./providers/authToken.providers";
+import { DatabaseModule } from "src/config/database/database.module";
 
 @Module({
   //User service등 사용하기 위해서 import
-  imports: [UsersModule, PassportModule, JwtModule],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  imports: [UsersModule, PassportModule, JwtModule, DatabaseModule],
+  providers: [...authTokenProviders, AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
