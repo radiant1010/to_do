@@ -3,13 +3,16 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from "typeorm";
 
 @Entity()
 export class AuthToken {
-  @PrimaryColumn()
-  token_id: string;
+  @PrimaryGeneratedColumn()
+  token_id: number;
+
+  @Column({ nullable: true, unique: true })
+  token: string;
 
   @Column({ nullable: false, unique: true })
   email: string;
