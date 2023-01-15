@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  PrimaryGeneratedColumn,
-} from "typeorm";
+import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class AuthToken {
@@ -17,7 +11,7 @@ export class AuthToken {
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @Column({ type: "datetime", nullable: false })
+  @Column({ type: 'datetime', nullable: false })
   expire_date: Date;
 
   @CreateDateColumn()

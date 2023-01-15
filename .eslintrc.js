@@ -6,15 +6,6 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint/eslint-plugin'],
-  rules: {
-    'indent': ['error', { 'allowIndentationTabs': true }],
-    'prettier/prettier': [
-      'error',
-      {
-        endOfLine: 'auto',
-      },
-    ],
-  },
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
