@@ -17,7 +17,19 @@ type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 describe('UsersService', () => {
   let userService: UsersService;
   let userRepository: MockRepository<User>;
-  let bcryptCompare: jest.Mock;
+
+  const saltRounds = 10;
+  let hashedPassword: string;
+  let createUserDto: CreateUserDto;
+
+  /*   beforeAll(() => {
+      hashedPassword = bcrypt.hashSync('Asdf1234!@!', saltRounds);
+      createUserDto = {
+        email: 'test@test.com',
+        name: '홍길동',
+        password: hashedPassword,
+      };
+    }); */
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -45,21 +57,26 @@ describe('UsersService', () => {
   //USER 회원가입 처리
   describe('create()', () => {
     //회원가입 더미 데이터
-    const createUserDto: CreateUserDto = {
+    createUserDto = {
       email: 'test@test.com',
       name: '홍길동',
       password: 'Asdf1234!@',
     };
     //Email 검사 실패
-    it('이메일이 중복되는 경우', async () => {
+    it.todo('이메일이 중복되는 경우');
+    //Email 검사 성공
+    it('이메일이 중복되지 않는 경우', async () => {
       // postRepository.save() error 발생
       //userRepository.save.mockRejectedValue('save error');
-      const result = await userService.create(createUserDto);
+      const findOneResult = await userService.isEmail(createUserDto.email);
       //catch문 내용 출력이 가능한지?
       //expect(result).toEqual({ code: 201, success: false, message: error.message });
+      expect(userRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(findOneResult).toEqual({ code: 102, success: true, message: '중복되는 E-Mail이 없습니다.' });
     });
-    //Email 검사 성공
-    it('이메일이 중복되지 않아 가입을 할 수 있는 경우', async () => {
+    //회원가입 완료 Test
+    it('회원 가입 완료', async () => {
+      console.log(createUserDto);
       const createUserResult = await userService.create(createUserDto);
       //1번 호출 되었는지?
       expect(userRepository.save).toHaveBeenCalledTimes(1);

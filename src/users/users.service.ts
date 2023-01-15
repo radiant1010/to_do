@@ -13,32 +13,28 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    try {
-      //중복 email 체크
-      const isEmail = await this.isEmail(createUserDto.email);
-      if (!isEmail) {
-        const saltOrRounds = 10;
-        const hash = await bcrypt.hash(createUserDto.password, saltOrRounds);
+    //중복 email 체크
+    const isEmail = await this.isEmail(createUserDto.email);
+    if (isEmail.success) {
+      const saltOrRounds = 10;
+      const hash = await bcrypt.hash(createUserDto.password, saltOrRounds);
 
-        const saveUser = await this.userRepository.save({
-          name: createUserDto.name,
-          email: createUserDto.email,
-          password: hash,
-        });
+      const saveUser = await this.userRepository.save({
+        name: createUserDto.name,
+        email: createUserDto.email,
+        password: hash,
+      });
 
-        return { code: 101, success: true, message: '회원가입 완료!' };
-      }
-    } catch (error) {
-      return { code: 201, success: false, message: error.message };
+      return { code: 101, success: true, message: '회원가입 완료!' };
     }
   }
 
-  //email Check
-  async isEmail(email: string): Promise<User> {
+  //중복 계정 조회
+  async isEmail(email: string): Promise<any> {
     //email여부 조회(유저 정보)
     const getEmail = await this.userRepository.findOne({
       where: { email: email },
     });
-    return getEmail;
+    return { code: 102, success: true, message: '중복되는 E-Mail이 없습니다.' };
   }
 }

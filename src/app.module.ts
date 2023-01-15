@@ -19,7 +19,7 @@ import { AuthToken } from './auth/entities/authToken.entity';
       database: 'to_do',
       entities: [User, AuthToken],
       synchronize: true,
-      timezone: 'Asia/Seoul',
+      timezone: '+09:00',
     }),
     ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
