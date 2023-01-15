@@ -1,3 +1,4 @@
+import { AuthToken } from './entities/authToken.entity';
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersModule } from 'src/users/users.module';
@@ -7,13 +8,12 @@ import { JwtModule, JwtSecretRequestType } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
-import { authTokenProviders } from './providers/authToken.providers';
-import { DatabaseModule } from 'src/config/database/database.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   //User service등 사용하기 위해서 import
-  imports: [UsersModule, PassportModule, JwtModule, DatabaseModule],
-  providers: [...authTokenProviders, AuthService, LocalStrategy, JwtStrategy],
+  imports: [TypeOrmModule.forFeature([AuthToken]), UsersModule, PassportModule, JwtModule],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
