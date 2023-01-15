@@ -5,31 +5,24 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { HttpException, HttpStatus, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
-//변수와 함수로 선언하는거 차이 기술
+type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+//변수와 함수로 선언하는거 차이?
 const mockPostRepository = () => ({
   save: jest.fn(),
   findOne: jest.fn(),
 });
 
-type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+const createUserDto = {
+  email: 'test@test.com',
+  name: '홍길동',
+  password: 'Asdf1234!@',
+};
 
 describe('UsersService', () => {
   let userService: UsersService;
   let userRepository: MockRepository<User>;
-
-  const saltRounds = 10;
-  let hashedPassword: string;
-  let createUserDto: CreateUserDto;
-
-  /*   beforeAll(() => {
-      hashedPassword = bcrypt.hashSync('Asdf1234!@!', saltRounds);
-      createUserDto = {
-        email: 'test@test.com',
-        name: '홍길동',
-        password: hashedPassword,
-      };
-    }); */
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +36,7 @@ describe('UsersService', () => {
     }).compile();
 
     userService = module.get<UsersService>(UsersService);
-    userRepository = module.get<MockRepository<User>>(getRepositoryToken(User));
+    userRepository = module.get('UserRepository') as MockRepository<User>;
   });
 
   it('should be userService', () => {
@@ -54,34 +47,29 @@ describe('UsersService', () => {
     expect(userRepository).toBeDefined();
   });
 
-  //USER 회원가입 처리
-  describe('create()', () => {
-    //회원가입 더미 데이터
-    createUserDto = {
-      email: 'test@test.com',
-      name: '홍길동',
-      password: 'Asdf1234!@',
-    };
+  describe('findOne', () => {
     //Email 검사 실패
-    it.todo('이메일이 중복되는 경우');
+    it('이메일이 중복되는 경우', async () => {
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(createUserDto);
+      await expect(async () => {
+        await userService.findOne({ email: createUserDto.email });
+      }).rejects.toThrowError(new HttpException('중복된 E-Mail입니다.', HttpStatus.BAD_REQUEST));
+    });
     //Email 검사 성공
     it('이메일이 중복되지 않는 경우', async () => {
-      // postRepository.save() error 발생
-      //userRepository.save.mockRejectedValue('save error');
-      const findOneResult = await userService.isEmail(createUserDto.email);
-      //catch문 내용 출력이 가능한지?
-      //expect(result).toEqual({ code: 201, success: false, message: error.message });
-      expect(userRepository.findOne).toHaveBeenCalledTimes(1);
-      expect(findOneResult).toEqual({ code: 102, success: true, message: '중복되는 E-Mail이 없습니다.' });
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(undefined);
+      const newUser = 'new_user@test.com';
+      const findOneResult = await userService.findOne({ email: newUser });
+      expect(findOneResult).toEqual(findOneResult);
     });
+  });
+  //USER 회원가입 처리
+  describe('create()', () => {
+    //인풋 체크
+    it.todo('입력값 검증');
     //회원가입 완료 Test
-    it('회원 가입 완료', async () => {
-      console.log(createUserDto);
-      const createUserResult = await userService.create(createUserDto);
-      //1번 호출 되었는지?
-      expect(userRepository.save).toHaveBeenCalledTimes(1);
-      //password 암호화 한 것 어떻게 가져오지?
-      expect(createUserResult).toEqual({ code: 101, success: true, message: '회원가입 완료!' });
-    });
+    it.todo('회원 가입 완료');
+    //회원가입 실패 Test
+    it.todo('회원 가입 실패');
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
@@ -10,12 +10,12 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     //중복 email 체크
-    const isEmail = await this.isEmail(createUserDto.email);
-    if (isEmail.success) {
+    const isEmail = await this.findOne({ email: createUserDto.email });
+    if (isEmail) {
       const saltOrRounds = 10;
       const hash = await bcrypt.hash(createUserDto.password, saltOrRounds);
 
@@ -25,16 +25,20 @@ export class UsersService {
         password: hash,
       });
 
-      return { code: 101, success: true, message: '회원가입 완료!' };
+      return { success: true, message: '회원가입 완료!' };
     }
   }
 
   //중복 계정 조회
-  async isEmail(email: string): Promise<any> {
+  async findOne({ email }: { email: string }): Promise<User> {
     //email여부 조회(유저 정보)
     const getEmail = await this.userRepository.findOne({
       where: { email: email },
     });
-    return { code: 102, success: true, message: '중복되는 E-Mail이 없습니다.' };
+    console.log('유저 조회결과 :', getEmail);
+    if (getEmail) {
+      throw new HttpException('중복된 E-Mail입니다.', HttpStatus.BAD_REQUEST);
+    }
+    return getEmail;
   }
 }

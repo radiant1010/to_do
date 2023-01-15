@@ -19,7 +19,7 @@ export class AuthService {
 
   async validateUser(userEmail: string, pass: string): Promise<any> {
     //user 정보 조회
-    const user = await this.usersService.isEmail(userEmail);
+    const user = await this.usersService.findOne({ email: userEmail });
     //user 정보 조회 후 가져온 PW와 입력받아 넘어온 PW를 bcrypt.compare로 비교
     const isMatch = await bcrypt.compare(pass, user.password);
 
@@ -32,7 +32,7 @@ export class AuthService {
   //JWT 로그인(토큰 생성)
   async login(loginUser: User): Promise<any> {
     try {
-      const user = await this.usersService.isEmail(loginUser.email);
+      const user = await this.usersService.findOne({ email: loginUser.email });
       const REFRESH_EXPIRY_DATE = moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS');
       console.log(REFRESH_EXPIRY_DATE);
       //exception filter 설정 필요
