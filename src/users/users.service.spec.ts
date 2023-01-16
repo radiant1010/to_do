@@ -4,13 +4,13 @@ import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
-import { ArgumentMetadata, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, ValidationPipe } from '@nestjs/common';
+import { ArgumentMetadata, HttpException, HttpStatus, ValidationPipe } from '@nestjs/common';
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 //변수와 함수로 선언하는거 차이?
 const mockPostRepository = () => ({
   save: jest.fn(),
+  create: jest.fn(),
   findOne: jest.fn(),
 });
 
@@ -73,11 +73,6 @@ describe('UsersService', () => {
       name: '미스터닭볶음탕',
       password: '',
     };
-    const correctInput = {
-      email: 'test@test.com',
-      name: '홍길동',
-      password: 'Asdf1234!@',
-    };
     //PIPE 설정
     const target: ValidationPipe = new ValidationPipe({ transform: true, whitelist: true });
     const metadata: ArgumentMetadata = {
@@ -89,7 +84,7 @@ describe('UsersService', () => {
     //회원가입 완료 Test
     it('회원 가입 성공', async () => {
       console.log('회원가입 완료');
-      const saveSpy = jest.spyOn(userRepository, 'save').mockResolvedValue(createUserDto);
+      const createSpy = jest.spyOn(userRepository, 'create').mockResolvedValue(createUserDto);
       //정규식 검증
       expect(createUserDto.email).toMatch(checkEmail);
       expect(createUserDto.name).toMatch(checkName);
@@ -97,12 +92,11 @@ describe('UsersService', () => {
       //create 호출
       const createResult = await userService.create(createUserDto);
       //비밀번호 DTO에서 바뀌는거는 검증 정확 하게 어케함?!?!
-      expect(saveSpy).toBeCalledWith(createUserDto);
+      expect(createSpy).toBeCalledWith(createUserDto);
       //저장은 한번만 되었는지?
-      expect(saveSpy).toHaveBeenCalledTimes(1);
+      expect(createSpy).toHaveBeenCalledTimes(1);
       //결과 Return
       expect(createResult).toEqual({ success: true, message: '회원가입 완료!' });
-      //jest.spyOn(userRepository, 'save').mockClear();
     });
 
     //회원가입 실패 Test

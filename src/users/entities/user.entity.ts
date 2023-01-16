@@ -27,7 +27,7 @@ export class User {
   //수정일
   @UpdateDateColumn()
   updated_at: Date;
-  //비밀번호 암호화(데이터 insert 동작 반대는 AfterInsert)
+  //비밀번호 암호화(데이터 insert전에 동작 반대는 AfterInsert)
   @BeforeInsert()
   async setPassword(): Promise<void> {
     try {
