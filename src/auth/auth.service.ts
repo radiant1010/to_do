@@ -39,8 +39,8 @@ export class AuthService {
 
     return { code: 101, result: 'success' };
   }
-  //refresh-token DB에서 삭제
-  //refresh-token DB에서 업데이트
+  //refresh-token DB에서 삭제(로그아웃시)
+  //refresh-token DB에서 업데이트(재발급 요청시)
 
   //계정 조회
   async findOne(email: string, password: string) {
@@ -61,7 +61,7 @@ export class AuthService {
       if (user && comparePassword) {
         //password는 넘겨주면 안되니까 따로 빼둠
         const { password, ...result } = user;
-        return result;
+        return { success: true, result };
       }
     } catch (error) {
       return { success: false, message: error.message };

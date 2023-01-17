@@ -29,9 +29,12 @@ export class UserService {
       return { success: false, message: '회원 가입에 실패 하였습니다. 입력한 정보를 확인해 주세요.' };
     }
   }
-  //로그인
+  //로그인(Passport에서 검증 완료하면 진입)
   async login(email: string) {
     try {
+      //유저 정보 조회? 2번씩이나 해야하나??
+      //JWT payload정보 만들기
+      //토큰 생성
       const access_token = '';
       const refresh_token = '';
       return {
