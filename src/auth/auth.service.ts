@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsersService } from '../users/users.service';
+import { UserService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
@@ -8,29 +8,34 @@ import { jwtConstants } from './constants';
 import { Repository } from 'typeorm';
 import { AuthToken } from './entities/authToken.entity';
 import * as moment from 'moment-timezone';
+import { SigninDto } from 'src/users/dto/login.dto';
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(AuthToken)
     private authRepository: Repository<AuthToken>,
-    private usersService: UsersService,
+    private userService: UserService,
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(userEmail: string, pass: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<any> {
     //user 정보 조회
-    const user = await this.usersService.findOne({ email: userEmail });
-    //user 정보 조회 후 가져온 PW와 입력받아 넘어온 PW를 bcrypt.compare로 비교
-    const isMatch = await bcrypt.compare(pass, user.password);
+    const user = await this.userService.findOne(email, password);
 
-    if (user && isMatch) {
-      const { password, ...result } = user;
-      return result;
+    if (user) {
+      return user;
     }
+
     return null;
   }
-
-  //refresh-token DB에 저장
+  //access-token 발급
+  async genAccessToken(email: string) {
+    return 'Token';
+  }
+  //refresh-token 발급, DB에 저장
+  async genRefreshToken(email: string) {
+    return 'Token';
+  }
   async saveRefreshToken(email: string, refreshToken: string, expire: string) {
     const saveToken = await this.authRepository.save({
       token: refreshToken,
