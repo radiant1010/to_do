@@ -4,13 +4,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AuthToken } from 'src/auth/entities/authToken.entity';
 import moment from 'moment';
+import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private authService: AuthService,
   ) {}
   //회원가입
   async createAccount({ email, name, password }: CreateUserDto) {
@@ -41,18 +42,4 @@ export class UserService {
     }
   }
   //회원 정보 수정
-
-  //계정 조회
-  async findOne(email: string, password: string) {
-    //email여부 조회(유저 정보)
-    const user = await this.userRepository.findOne({ where: { email: email } });
-    if (!user) {
-      return { success: false, message: '계정 정보를 찾을 수 없습니다.' };
-    }
-    const comparePassword = await user.checkPassword(password);
-    if (!comparePassword) {
-      return { success: false, error: '비밀번호를 확인해 주세요.' };
-    }
-    return { success: true, user };
-  }
 }

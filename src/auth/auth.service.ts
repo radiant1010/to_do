@@ -14,13 +14,14 @@ export class AuthService {
   constructor(
     @InjectRepository(AuthToken)
     private authRepository: Repository<AuthToken>,
-    private userService: UserService,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     //user 정보 조회
-    const user = await this.userService.findOne(email, password);
+    const user = await this.findOne(email, password);
 
     if (user) {
       return user;
@@ -49,4 +50,18 @@ export class AuthService {
   }
   //refresh-token DB에서 삭제
   //refresh-token DB에서 업데이트
+
+  //계정 조회
+  async findOne(email: string, password: string) {
+    //email여부 조회(유저 정보)
+    const user = await this.userRepository.findOne({ where: { email: email } });
+    if (!user) {
+      return { success: false, message: '계정 정보를 찾을 수 없습니다.' };
+    }
+    const comparePassword = await user.checkPassword(password);
+    if (!comparePassword) {
+      return { success: false, error: '비밀번호를 확인해 주세요.' };
+    }
+    return { success: true, user };
+  }
 }
