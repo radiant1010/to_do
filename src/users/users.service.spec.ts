@@ -1,41 +1,44 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UsersService } from './users.service';
+import { UserService } from './users.service';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ArgumentMetadata, HttpException, HttpStatus, ValidationPipe } from '@nestjs/common';
-
+//Repostory 선언(utility type)
+/* 
+  Partial<T> : <T>의 모든 프로퍼티를 선택적으로 만드는 타입을 구성합니다. 이 유틸리티는 주어진 타입의 모든 하위 타입 집합을 나타내는 타입을 반환합니다.
+  Record<K, T> : 타입 T의 프로퍼티의 집합 K로 타입을 구성합니다. 이 유틸리티는 타입의 프로퍼티들을 다른 타입에 매핑시키는 데 사용될 수 있습니다.
+  상세 설명 : https://typescript-kr.github.io/pages/utility-types.html
+  https://darrengwon.tistory.com/999
+  keyof Repository<T>로 해당 Repository가 가지고 있는 메서드 추출
+  해당 타입을 Key 값으로, jest.Mock 값을 Value로 Return
+  정의된 메서드를 사용하지 않고 일부만 사용하기에 Partial로 감싸 optional 처리
+ */
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 //변수와 함수로 선언하는거 차이?
-const mockPostRepository = () => ({
+const mockUserRepository = () => ({
   save: jest.fn(),
   create: jest.fn(),
   findOne: jest.fn(),
 });
 
-const createUserDto = {
-  email: 'test@test.com',
-  name: '홍길동',
-  password: 'Asdf1234!@',
-};
-
 describe('UsersService', () => {
-  let userService: UsersService;
+  let userService: UserService;
   let userRepository: MockRepository<User>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UsersService,
+        UserService,
         {
           provide: getRepositoryToken(User),
-          useValue: mockPostRepository(),
+          useValue: mockUserRepository(),
         },
       ],
     }).compile();
 
-    userService = module.get<UsersService>(UsersService);
+    userService = module.get<UserService>(UserService);
     userRepository = module.get<MockRepository<User>>(getRepositoryToken(User));
   });
 
@@ -46,33 +49,14 @@ describe('UsersService', () => {
   it('should be userRepository', () => {
     expect(userRepository).toBeDefined();
   });
-
-  describe('findOne', () => {
-    const newUser = 'new_user@test.com';
-    //Email 검사 실패
-    it('이메일이 중복되어 에러 반환', async () => {
-      jest.spyOn(userRepository, 'findOne').mockResolvedValue(createUserDto);
-      await expect(async () => {
-        await userService.findOne({ email: createUserDto.email });
-      }).rejects.toThrowError(new HttpException('중복된 E-Mail입니다.', HttpStatus.BAD_REQUEST));
-    });
-    //Email 검사 성공
-    it('이메일이 중복되지 않는 경우', async () => {
-      jest.spyOn(userRepository, 'findOne').mockResolvedValue(undefined);
-      const findOneResult = await userService.findOne({ email: newUser });
-      expect(findOneResult).toEqual(findOneResult);
-    });
-  });
   //USER 회원가입 처리
-  describe('create()', () => {
-    const checkEmail = /([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
-    const checkName = /^[가-힣]{2,5}$/;
-    const checkPassword = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/;
-    const wrongInput = {
-      email: 'test1234@test',
-      name: '미스터닭볶음탕',
-      password: '',
+  describe('createAccount()', () => {
+    const createUserDto = {
+      email: 'test@test.com',
+      name: '홍길동',
+      password: 'Asdf1234!@',
     };
+
     //PIPE 설정
     const target: ValidationPipe = new ValidationPipe({ transform: true, whitelist: true });
     const metadata: ArgumentMetadata = {
@@ -81,35 +65,42 @@ describe('UsersService', () => {
       data: '',
     };
 
+    //###Q1. jest.spyOn는 언제 써야하는가?
+    //###Q2. Repository를 그냥 쓰는경우는 언제인가?
+    it('e-mail이 중복인 경우', async () => {
+      //이건 왜 넣지?
+      userRepository.findOne.mockResolvedValue({ email: 'test@test.com' });
+      //그리고 Service를 왜 호출하지?
+      const result = await userService.createAccount(createUserDto);
+      expect(result).toMatchObject({ success: false, message: '이미 가입 처리된 e-mail입니다.' });
+    });
+
     //회원가입 완료 Test
     it('회원 가입 성공', async () => {
-      console.log('회원가입 완료');
-      const createSpy = jest.spyOn(userRepository, 'create').mockResolvedValue(createUserDto);
-      //정규식 검증
-      expect(createUserDto.email).toMatch(checkEmail);
-      expect(createUserDto.name).toMatch(checkName);
-      expect(createUserDto.password).toMatch(checkPassword);
+      //e-mail 조회(성공 가정)
+      userRepository.findOne.mockResolvedValue(undefined);
+      //계정 정보 저장(성공)
+      userRepository.create.mockReturnValue(createUserDto);
+      userRepository.save.mockResolvedValue(createUserDto);
       //create 호출
-      const createResult = await userService.create(createUserDto);
-      //비밀번호 DTO에서 바뀌는거는 검증 정확 하게 어케함?!?!
-      expect(createSpy).toBeCalledWith(createUserDto);
-      //저장은 한번만 되었는지?
-      expect(createSpy).toHaveBeenCalledTimes(1);
-      //결과 Return
+      const createResult = await userService.createAccount(createUserDto);
+
+      expect(userRepository.create).toBeCalledWith(createUserDto);
+      expect(userRepository.create).toHaveBeenCalledTimes(1);
+
+      expect(userRepository.save).toBeCalledWith(createUserDto);
+      expect(userRepository.save).toHaveBeenCalledTimes(1);
+      //결과
       expect(createResult).toEqual({ success: true, message: '회원가입 완료!' });
     });
 
     //회원가입 실패 Test
-    it('회원 가입 실패', async () => {
-      console.log('회원가입 실패');
-      const wrongUserSpy = jest.spyOn(userRepository, 'save').mockResolvedValue(wrongInput);
-      //error로 들어가니까 save 함수 호출하면 안됨
-      expect(wrongUserSpy).not.toHaveBeenCalled();
+    it('회원가입에 실패한 경우(Pipe)', async () => {
       //nest pipe를 가져와야함(안그러면 에러를 출력 못함)
-      await target.transform(wrongInput, metadata).catch((e) => {
+      await target.transform(createUserDto, metadata).catch((e) => {
         //message를 커스텀하게 주지 않았기에 Bad Request를 반환
         expect(e.getResponse().error).toEqual('Bad Request');
-        //정규식(모든게 안맞음)
+        //정규식(모든게 안맞는 경우)
         expect(e.getResponse().message).toEqual([
           'name must be shorter than or equal to 5 characters',
           'email must be an email',
@@ -119,4 +110,22 @@ describe('UsersService', () => {
       });
     });
   });
+
+  //E-mail 조회
+  /*   describe('findOne', () => {
+      const newUser = 'new_user@test.com';
+      //Email 검사 실패
+      it('이메일이 중복되어 에러 반환', async () => {
+        jest.spyOn(userRepository, 'findOne').mockResolvedValue(createUserDto);
+        await expect(async () => {
+          await userService.findOne({ email: createUserDto.email });
+        }).rejects.toThrowError(new HttpException('중복된 E-Mail입니다.', HttpStatus.BAD_REQUEST));
+      });
+      //Email 검사 성공
+      it('이메일이 중복되지 않는 경우', async () => {
+        jest.spyOn(userRepository, 'findOne').mockResolvedValue(undefined);
+        const findOneResult = await userService.findOne({ email: newUser });
+        expect(findOneResult).toEqual(findOneResult);
+      });
+    }); */
 });

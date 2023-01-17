@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BeforeInsert } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { InternalServerErrorException } from '@nestjs/common';
 
@@ -29,6 +29,7 @@ export class User {
   updated_at: Date;
   //비밀번호 암호화(데이터 insert전에 동작 반대는 AfterInsert)
   @BeforeInsert()
+  @BeforeUpdate()
   async setPassword(): Promise<void> {
     try {
       if (this.password) {
@@ -43,5 +44,15 @@ export class User {
   private hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
+  }
+
+  async checkPassword(isPassword: string): Promise<boolean> {
+    try {
+      //compare는 Boolean Type
+      const resultCompare = await bcrypt.compare(isPassword, this.password);
+      return resultCompare;
+    } catch (error) {
+      throw new InternalServerErrorException('Password compare Error');
+    }
   }
 }
