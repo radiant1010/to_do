@@ -19,6 +19,7 @@ export class UsersController {
   @UseGuards(LocalAuthGuard)
   @Post('signin')
   async login(@Body() signinDto: SigninDto, @Res() res) {
+    //localStrategy를 통과해야지 데이터 넘어옴(아닐시에 validate에서 throw Exception에서 막힘)
     const jwtData = await this.userService.login(signinDto.email);
     /*     //access_token
         res.cookie('Authorization', jwtData.access_token, {

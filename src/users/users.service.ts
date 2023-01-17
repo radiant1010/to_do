@@ -32,10 +32,12 @@ export class UserService {
   //로그인
   async login(email: string) {
     try {
-      //authService에 있는 토큰 발급 호출
+      const access_token = '';
+      const refresh_token = '';
       return {
         success: true,
-        message: '토큰 정보 입력',
+        access_token,
+        refresh_token,
       };
     } catch (error) {
       return { success: false, message: '로그인 정보를 찾을 수 없습니다.' };

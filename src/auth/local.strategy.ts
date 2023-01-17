@@ -11,12 +11,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(email: string, password: string): Promise<SigninDto> {
-    console.log(email);
-    console.log(password);
-    const user = await this.authService.validateUser(email, password);
-    if (!user) {
-      throw new UnauthorizedException();
+    //받아오는 결과는 에러시 success : false, 올바른 정보 : 유저 정보
+    const result = await this.authService.validateUser(email, password);
+    if (!result.success) {
+      throw new UnauthorizedException(result.message);
     }
-    return user;
+    return result;
   }
 }
