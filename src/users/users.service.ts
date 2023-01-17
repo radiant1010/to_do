@@ -6,13 +6,14 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import moment from 'moment';
 import { AuthService } from '../auth/auth.service';
+import { SigninDto } from './dto/login.dto';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private authService: AuthService,
-  ) {}
+  ) { }
   //회원가입
   async createAccount({ email, name, password }: CreateUserDto) {
     try {
@@ -30,11 +31,12 @@ export class UserService {
     }
   }
   //로그인(Passport에서 검증 완료하면 진입)
-  async login(email: string) {
+  async login(user: any) {
     try {
-      //유저 정보 조회? 2번씩이나 해야하나??
-      //JWT payload정보 만들기
-      //토큰 생성
+      //env 추가(cross-env) -> JWT 토큰 시간 넣기(maxAge? expire?) 뭐로하지?
+      //payload 인터페이스? class 생성
+      //user정보로 JWT payload 객체 만들기
+      //토큰 생성 함수 호출
       const access_token = '';
       const refresh_token = '';
       return {

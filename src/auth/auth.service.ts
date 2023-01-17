@@ -61,7 +61,7 @@ export class AuthService {
       if (user && comparePassword) {
         //password는 넘겨주면 안되니까 따로 빼둠
         const { password, ...result } = user;
-        return { success: true, result };
+        return { success: true, user: result };
       }
     } catch (error) {
       return { success: false, message: error.message };
