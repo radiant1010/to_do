@@ -18,11 +18,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: any): Promise<any> {
+    console.log('JWT 페이지 접근시 payload 정보:', payload);
     //user 정보가 있는지 여부 체크
     if (!payload) {
       throw new UnauthorizedException('유저 정보를 찾을 수 없음!(토큰 유효기간 만료)');
     }
-    return payload;
+    return payload.id;
   }
 }

@@ -36,26 +36,44 @@ export class AuthService {
   //refresh-token 발급, DB에 저장
   async genRefreshToken(user: User): Promise<string | any> {
     try {
-      const _token = uuidv4();
+      //const _token = uuidv4();
+      const refreshToken = this.jwtService.sign(
+        { id: user.user_id },
+        {
+          secret: jwtConstants.refresh,
+          expiresIn: '30m',
+        },
+      );
       //DB에도 저장(expire_date는 GMT 00:00시 기준으로 저장해야 하나?)
+      const coupleWeeks = moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS');
       const saveToken = await this.authRepository.save({
-        token: _token,
+        token: refreshToken,
         email: user.email,
-        expire_date: moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS'),
+        expire_date: coupleWeeks,
       });
-      return _token;
+      return refreshToken;
     } catch (error) {
       console.log(error);
       return { success: false, message: error.message };
     }
   }
   //refresh token 정보 조회
-  async findOneRefreshToken(user: User) {
+  async findOneRefreshToken(refreshToken: string, id: number) {
+    //ID로 유저부터 조회
+    const user = await this.userRepository.findOne({ where: { user_id: id } });
+    if (!user) {
+      return { success: false, message: 'User 정보가 없습니다!' };
+    }
+    //유저 정보로 데이터 조회
     const tokenCheckExpire = await this.authRepository.findOne({ where: { email: user.email } });
-    return tokenCheckExpire;
+    if (!tokenCheckExpire) {
+      return { success: false, message: 'Token 정보가 없습니다!' };
+    }
+    return { success: true, user_id: user.user_id };
   }
   //refresh-token DB에서 업데이트(로직 고민중)
-  async refreshTokenUpdate() {
+  async refreshTokenUpdate(refreshToken: string, id: number) {
+    console.log(refreshToken, id);
     //토큰 조회
     //토큰값이 비어있다면(토큰값만 날려줄거거든~) 에러 반환 다시 로그인 하세요!
     //토큰 검증{expire_date < 현재시간} === 즉, 만료되었음

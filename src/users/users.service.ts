@@ -40,8 +40,6 @@ export class UserService {
   */
   async login(user: User) {
     try {
-      const access_token = await this.authService.genAccessToken(user.user_id);
-
       //refresh token 검증
       //로그인을 또 했는데 3번 case일 경우를 가정. 생각해보면 refresh token을 로그인 할때마다 또 발급하는거는 보안상 의미가 없다.
       //passport에서 추가하면 어떻게 체크하게 될지는 모르지만 의식의 흐름대로 작성 후 수정.
@@ -49,11 +47,14 @@ export class UserService {
       //가만 생각해보면 wave 로그인 생각해보면 될 것 같다.
       //kakao 로그인이 자주 풀리는데 사이트 접근 -> access token 정보 확인 ->
       //만료 -> 로그인 -> refreshtoken 확인 -> access token 재발급 || 강제 로그아웃 후 계정 정보(입력 받은 IP, PW)로 다시 로그인
-      //유효 -> 그냥 로그아웃 될 이유가 없다.
-      const checkRefreshToken = await this.authService.findOneRefreshToken(user);
-      console.log(checkRefreshToken);
-      //refresh token 발급
+      //유효 -> 그냥 로그아웃 될 이유가 없다
+
+      //우선은! 로그인을 하고 다음 동작을 한다는 가정하에 쭉 개발하고 수정하자.
+      //const checkRefreshToken = await this.authService.findOneRefreshToken(user);
+      //console.log(checkRefreshToken);
+      const access_token = await this.authService.genAccessToken(user.user_id);
       const refresh_token = await this.authService.genRefreshToken(user);
+
       return {
         success: true,
         access_token: access_token,
