@@ -22,33 +22,54 @@ export class AuthService {
     return user;
   }
   //access-token 발급
-  async genAccessToken(user: User) {
-    const accessToken = this.jwtService.sign(user, {
-      secret: jwtConstants.secret,
-      expiresIn: '30m',
-    });
+  async genAccessToken(user: User): Promise<string | any> {
+    const accessToken = this.jwtService.sign(
+      {
+        id: user.user_id,
+        name: user.name,
+        role: user.role,
+      },
+      {
+        secret: jwtConstants.secret,
+        expiresIn: '30m',
+      },
+    );
     return accessToken;
   }
   //refresh-token 발급, DB에 저장
-  async genRefreshToken(user: User) {
-    const refreshToken = this.jwtService.sign(user, {
-      secret: jwtConstants.refresh,
-      expiresIn: '2w',
-    });
-    //DB에도 저장
-    return refreshToken;
-  }
-
-  async saveRefreshToken(email: string, refreshToken: string, expire: string) {
-    const saveToken = await this.authRepository.save({
-      token: refreshToken,
-      email: email,
-      expire_date: expire,
-    });
-
-    console.log('결과 값 :', saveToken);
-
-    return { code: 101, result: 'success' };
+  async genRefreshToken(user: User): Promise<string | any> {
+    try {
+      const REFRESH_EXPIRY_DATE = moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS');
+      //로그인을 또 했을 수 있으니까 토큰 정보부터 조회한다(email이 unique로 등록되어 있어서 duplicate 에러날거임)
+      //중복 : 꺼내서 확인하고 번거로우니까 그냥 재발급(DB 업데이트)
+      //미중복 : 그냥 발급 후 DB에 저장
+      //아니면 그냥 upsert처리?
+      const refreshToken = this.jwtService.sign(
+        {
+          id: user.user_id,
+          name: user.name,
+          role: user.role,
+        },
+        {
+          secret: jwtConstants.refresh,
+          expiresIn: '2w',
+        },
+      );
+      console.log('refreshToken :', refreshToken);
+      //DB에도 저장(expire_date는 GMT 00:00시 기준으로 저장해야 하나?)
+      const saveToken = await this.authRepository.save({
+        token: refreshToken,
+        email: user.email,
+        expire_date: REFRESH_EXPIRY_DATE,
+      });
+      if (!saveToken) {
+        return { success: false, message: 'refresh_token 생성 에러' };
+      }
+      return refreshToken;
+    } catch (error) {
+      console.log(error);
+      return { success: false, message: error.message };
+    }
   }
   //refresh-token DB에서 삭제(로그아웃시)
   //refresh-token DB에서 업데이트(재발급 요청시)
@@ -56,7 +77,6 @@ export class AuthService {
   //계정 조회
   async findOne(email: string, password: string) {
     try {
-      //email여부 조회(유저 정보), 쿼리빌더로 필요한 정보만 가져오도록 수정
       const user = await this.userRepository.findOne({ where: { email: email } });
       const comparePassword = await user.checkPassword(password);
       if (!user) {
