@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { AuthToken } from './entities/authToken.entity';
 import * as moment from 'moment-timezone';
 import { jwtConstants } from './constants';
+import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class AuthService {
   constructor(
@@ -22,13 +23,9 @@ export class AuthService {
     return user;
   }
   //access-token 발급
-  async genAccessToken(user: User): Promise<string | any> {
+  async genAccessToken(user_id: number): Promise<string | any> {
     const accessToken = this.jwtService.sign(
-      {
-        id: user.user_id,
-        name: user.name,
-        role: user.role,
-      },
+      { id: user_id },
       {
         secret: jwtConstants.secret,
         expiresIn: '30m',
@@ -39,40 +36,34 @@ export class AuthService {
   //refresh-token 발급, DB에 저장
   async genRefreshToken(user: User): Promise<string | any> {
     try {
-      const REFRESH_EXPIRY_DATE = moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS');
-      //로그인을 또 했을 수 있으니까 토큰 정보부터 조회한다(email이 unique로 등록되어 있어서 duplicate 에러날거임)
-      //중복 : 꺼내서 확인하고 번거로우니까 그냥 재발급(DB 업데이트)
-      //미중복 : 그냥 발급 후 DB에 저장
-      //아니면 그냥 upsert처리?
-      const refreshToken = this.jwtService.sign(
-        {
-          id: user.user_id,
-          name: user.name,
-          role: user.role,
-        },
-        {
-          secret: jwtConstants.refresh,
-          expiresIn: '2w',
-        },
-      );
-      console.log('refreshToken :', refreshToken);
+      const _token = uuidv4();
       //DB에도 저장(expire_date는 GMT 00:00시 기준으로 저장해야 하나?)
       const saveToken = await this.authRepository.save({
-        token: refreshToken,
+        token: _token,
         email: user.email,
-        expire_date: REFRESH_EXPIRY_DATE,
+        expire_date: moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS'),
       });
-      if (!saveToken) {
-        return { success: false, message: 'refresh_token 생성 에러' };
-      }
-      return refreshToken;
+      return _token;
     } catch (error) {
       console.log(error);
       return { success: false, message: error.message };
     }
   }
+  //refresh token 정보 조회
+  async findOneRefreshToken(user: User) {
+    const tokenCheckExpire = await this.authRepository.findOne({ where: { email: user.email } });
+    return tokenCheckExpire;
+  }
+  //refresh-token DB에서 업데이트(로직 고민중)
+  async refreshTokenUpdate() {
+    //토큰 조회
+    //토큰값이 비어있다면(토큰값만 날려줄거거든~) 에러 반환 다시 로그인 하세요!
+    //토큰 검증{expire_date < 현재시간} === 즉, 만료되었음
+    //검증 결과 true? not null? 이면 컬럼삭제? token 부분 공백으로 지우기?
+    //결과 false이면 access 토큰만 재발급
+    return { success: true, message: '새로 발급한 refresh 토큰정보 전달' };
+  }
   //refresh-token DB에서 삭제(로그아웃시)
-  //refresh-token DB에서 업데이트(재발급 요청시)
 
   //계정 조회
   async findOne(email: string, password: string) {

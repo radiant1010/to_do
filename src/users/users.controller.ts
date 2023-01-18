@@ -8,7 +8,7 @@ import { SigninDto } from './dto/login.dto';
 @Controller('users')
 export class UsersController {
   authService: any;
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
   //회원가입
   @Post('signup')
   async createAccount(@Body() createUserDto: CreateUserDto) {
