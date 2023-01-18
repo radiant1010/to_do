@@ -5,6 +5,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthToken } from './entities/authToken.entity';
 import * as moment from 'moment-timezone';
+import { jwtConstants } from './constants';
 @Injectable()
 export class AuthService {
   constructor(
@@ -13,7 +14,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     //user 정보 조회
@@ -21,13 +22,23 @@ export class AuthService {
     return user;
   }
   //access-token 발급
-  async genAccessToken(email: string) {
-    return 'Token';
+  async genAccessToken(user: User) {
+    const accessToken = this.jwtService.sign(user, {
+      secret: jwtConstants.secret,
+      expiresIn: '30m',
+    });
+    return accessToken;
   }
   //refresh-token 발급, DB에 저장
-  async genRefreshToken(email: string) {
-    return 'Token';
+  async genRefreshToken(user: User) {
+    const refreshToken = this.jwtService.sign(user, {
+      secret: jwtConstants.refresh,
+      expiresIn: '2w',
+    });
+    //DB에도 저장
+    return refreshToken;
   }
+
   async saveRefreshToken(email: string, refreshToken: string, expire: string) {
     const saveToken = await this.authRepository.save({
       token: refreshToken,
@@ -45,7 +56,7 @@ export class AuthService {
   //계정 조회
   async findOne(email: string, password: string) {
     try {
-      //email여부 조회(유저 정보)
+      //email여부 조회(유저 정보), 쿼리빌더로 필요한 정보만 가져오도록 수정
       const user = await this.userRepository.findOne({ where: { email: email } });
       const comparePassword = await user.checkPassword(password);
       if (!user) {

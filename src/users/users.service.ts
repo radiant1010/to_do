@@ -31,18 +31,14 @@ export class UserService {
     }
   }
   //로그인(Passport에서 검증 완료하면 진입)
-  async login(user: any) {
+  async login(user: User) {
     try {
-      //env 추가(cross-env) -> JWT 토큰 시간 넣기(maxAge? expire?) 뭐로하지?
-      //payload 인터페이스? class 생성
-      //user정보로 JWT payload 객체 만들기
-      //토큰 생성 함수 호출
-      const access_token = '';
-      const refresh_token = '';
+      const access_token = await this.authService.genAccessToken(user);
+      const refresh_token = await this.authService.genRefreshToken(user);
       return {
         success: true,
-        access_token,
-        refresh_token,
+        access_token: access_token,
+        refresh_token: refresh_token,
       };
     } catch (error) {
       return { success: false, message: '로그인 정보를 찾을 수 없습니다.' };
