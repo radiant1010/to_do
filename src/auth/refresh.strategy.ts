@@ -26,7 +26,7 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   async validate(request: any, payload: any) {
     //JWT 토큰 정보 만료 ==> payload 없음
     if (!payload) {
-      throw new UnauthorizedException('payload 정보가 없음');
+      throw new HttpException('payload 정보가 없음', HttpStatus.UNAUTHORIZED);
     }
     //강제 로그아웃 처리
     const tokenData = request?.cookies?.Refresh;

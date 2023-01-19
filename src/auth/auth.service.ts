@@ -16,7 +16,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     //user 정보 조회
@@ -47,7 +47,7 @@ export class AuthService {
       );
       //DB에도 저장(expire_date는 GMT 00:00시 기준으로 저장해야 하나?)
       const coupleWeeks = new Date(now.setDate(now.getDate() + 14));
-      console.log(coupleWeeks);
+
       const saveToken = await this.authRepository.save({
         token: refreshToken,
         email: user.email,
@@ -80,15 +80,19 @@ export class AuthService {
     }
     return { success: true, user_id: user.user_id };
   }
-  //refresh-token DB에서 업데이트(로직 고민중)
-  async refreshTokenUpdate(refreshToken: string, id: number) {
-    console.log(refreshToken, id);
-    //토큰 조회
-    //토큰값이 비어있다면(토큰값만 날려줄거거든~) 에러 반환 다시 로그인 하세요!
-    //토큰 검증{expire_date < 현재시간} === 즉, 만료되었음
-    //검증 결과 true? not null? 이면 컬럼삭제? token 부분 공백으로 지우기?
-    //결과 false이면 access 토큰만 재발급
-    return { success: true, message: '새로 발급한 refresh 토큰정보 전달' };
+  //로그아웃, 만료시 refresh token 정보 삭제
+  async removeRefreshToken(user_id: number) {
+    //유저 정보 조회
+    const user = await this.userRepository.findOne({ where: { user_id: user_id } });
+    //데이터 삭제
+    const removeRefreshToken = await this.authRepository
+      .createQueryBuilder('auth_token')
+      .update()
+      .set({ token: '' })
+      .where('email = :email', { email: user.email })
+      .execute();
+    console.log(removeRefreshToken);
+    return { success: true, message: 'refresh 정보 삭제 완료' };
   }
   //refresh-token DB에서 삭제(로그아웃시)
 
@@ -99,8 +103,7 @@ export class AuthService {
       const comparePassword = await user.checkPassword(password);
       if (!user) {
         //typeORM null(DB 조회 실패시)일때 메시지 수정(인터셉터, exception filter 작성해야함)
-        //throw new HttpException('가입된 유저가 아닙니다.', HttpStatus.BAD_REQUEST);
-        throw Error();
+        throw new HttpException('가입된 유저가 아닙니다.', HttpStatus.BAD_REQUEST);
       }
 
       if (!comparePassword) {

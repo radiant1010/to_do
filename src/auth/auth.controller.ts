@@ -2,7 +2,6 @@ import { Controller, Get, Header, Post, Req, Request, Res, UseGuards } from '@ne
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RefreshAuthGuard } from './refresh-auth.guard';
-import { Public } from './decorator/public.decorator';
 
 @Controller('auth')
 export class AuthController {
