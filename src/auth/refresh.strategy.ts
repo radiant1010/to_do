@@ -35,7 +35,6 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
     }
     //토큰이 올바른지 검증
     const user = await this.authService.findOneRefreshToken(tokenData, payload.id);
-
     if (!user) {
       throw new HttpException('RefreshToken 정보가 없음', HttpStatus.BAD_REQUEST);
     }

@@ -7,6 +7,7 @@ import { AuthToken } from './entities/authToken.entity';
 import * as moment from 'moment-timezone';
 import { jwtConstants } from './constants';
 import { v4 as uuidv4 } from 'uuid';
+import { CreateAuthDto } from './dto/create-auth.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -15,7 +16,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     //user 정보 조회
@@ -36,7 +37,7 @@ export class AuthService {
   //refresh-token 발급, DB에 저장
   async genRefreshToken(user: User): Promise<string | any> {
     try {
-      //const _token = uuidv4();
+      const now = new Date();
       const refreshToken = this.jwtService.sign(
         { id: user.user_id },
         {
@@ -45,12 +46,14 @@ export class AuthService {
         },
       );
       //DB에도 저장(expire_date는 GMT 00:00시 기준으로 저장해야 하나?)
-      const coupleWeeks = moment().add('2', 'w').format('YYYY-MM-DD HH:MM:SS');
+      const coupleWeeks = new Date(now.setDate(now.getDate() + 14));
+      console.log(coupleWeeks);
       const saveToken = await this.authRepository.save({
         token: refreshToken,
         email: user.email,
         expire_date: coupleWeeks,
       });
+      console.log(saveToken);
       return refreshToken;
     } catch (error) {
       console.log(error);
@@ -68,6 +71,12 @@ export class AuthService {
     const tokenCheckExpire = await this.authRepository.findOne({ where: { email: user.email } });
     if (!tokenCheckExpire) {
       return { success: false, message: 'Token 정보가 없습니다!' };
+    }
+    const isRefreshTokenVerfiy = await this.jwtService.verify(refreshToken, {
+      secret: jwtConstants.refresh,
+    });
+    if (!isRefreshTokenVerfiy) {
+      throw new HttpException('Token 정보 미일치!', HttpStatus.UNAUTHORIZED);
     }
     return { success: true, user_id: user.user_id };
   }

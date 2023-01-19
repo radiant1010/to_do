@@ -3,7 +3,7 @@ import { UserService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LocalAuthGuard } from '../auth/local-auth.guard';
-import { SigninDto } from './dto/login.dto';
+import { Public } from 'src/auth/decorator/public.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -16,9 +16,10 @@ export class UsersController {
   }
   //로그인
   //###Q1. request.body에서 유저 정보 가져오기 vs DTO에서 정보 가져오기중 어떤것이 보안적인 측면에서 좋은방법인가?
+  @Public()
   @UseGuards(LocalAuthGuard)
   @Post('signin')
-  async login(@Req() req, @Res() res) {
+  async login(@Req() req, @Res({ passthrough: false }) res) {
     //localStrategy를 통과해야지 user 데이터 넘어옴(아닐시에 validate에서 throw Exception에서 막힘)
     const { user } = req.user;
     const jwtData = await this.userService.login(user);
